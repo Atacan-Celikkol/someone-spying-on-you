@@ -20,7 +20,11 @@ namespace SomeOneSpyingOnYou
         static void Main(string[] args)
         {
             InitializeConsoleConfigurations();
-            _emailService.SendEmailAsync(null,null,null);
+
+            var sender = new EmailCredentials() { Username = "", Password = "" };
+            var receivers = new string[] { "atacan.celikkol@hotmail.com" };
+
+            _emailService.SendMailAsync(sender, receivers, "Merhaba canım");
             Console.Read();
         }
     }
