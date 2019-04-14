@@ -1,18 +1,30 @@
 ﻿using System;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace SomeOneSpyingOnYou.Services
 {
-    public class CryptographyService : IDisposable
+    public sealed class CryptographyService : IDisposable
     {
-        private readonly RSACryptoServiceProvider rsaProvider;
-        private readonly UnicodeEncoding byteConverter;
+        static private string PasswordHash = "P@@Sw0rd";
+        static private string SaltKey = "ZP5sji8BpzOTcm8lZikg+NbeN87JgzDJ6SEdVwoio4o=";
+        static private string VIKey = "Nj/uRmU76g1Pa4PRjO0B0w==";
+
+        private static RijndaelManaged symmetricKey = new RijndaelManaged();
+
         public CryptographyService()
         {
-            rsaProvider = new RSACryptoServiceProvider(2048);
-            rsaProvider.ExportParameters(false);
-            byteConverter = new UnicodeEncoding();
+            //PasswordHash = ProjectConfigurationManager.GetValue("PasswordHash");
+            //SaltKey = ProjectConfigurationManager.GetValue("SaltKey");
+            //VIKey = ProjectConfigurationManager.GetValue("VIKey");
+
+            //symmetricKey = new RijndaelManaged();
+            //symmetricKey.GenerateIV();
+            //VIKey = Convert.ToBase64String(symmetricKey.IV);
+            //symmetricKey.GenerateKey();
+            //SaltKey = Convert.ToBase64String(symmetricKey.Key);
+
         }
 
         public void Dispose()
@@ -21,72 +33,47 @@ namespace SomeOneSpyingOnYou.Services
 
         public string Encrypt(string text)
         {
-            var encryptedData = RSAEncrypt(byteConverter.GetBytes(text), rsaProvider.ExportParameters(false), false);
-            return Convert.ToBase64String(encryptedData);
+            byte[] plainTextBytes = Encoding.UTF8.GetBytes(text);
+            symmetricKey.Mode = CipherMode.CBC;
+            symmetricKey.Padding = PaddingMode.Zeros;
+
+            byte[] keyBytes = new Rfc2898DeriveBytes(PasswordHash, Convert.FromBase64String(SaltKey)).GetBytes(256 / 8);
+            var encryptor = symmetricKey.CreateEncryptor(keyBytes, Convert.FromBase64String(VIKey));
+
+            byte[] cipherTextBytes;
+
+            using (var memoryStream = new MemoryStream())
+            {
+                using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
+                {
+                    cryptoStream.Write(plainTextBytes, 0, plainTextBytes.Length);
+                    cryptoStream.FlushFinalBlock();
+                    cipherTextBytes = memoryStream.ToArray();
+                    cryptoStream.Close();
+                }
+                memoryStream.Close();
+            }
+            return Convert.ToBase64String(cipherTextBytes);
         }
 
-        public string Decrypt(string encryptedBytesString)
-        {            
-            var decryptedData = RSADecrypt(Convert.FromBase64String(encryptedBytesString), rsaProvider.ExportParameters(true), false);
-            return byteConverter.GetString(decryptedData);
-        }
-
-
-
-
-        public byte[] RSAEncrypt(byte[] DataToEncrypt, RSAParameters RSAKeyInfo, bool DoOAEPPadding)
+        public string Decrypt(string encryptedText)
         {
-            try
-            {
-                byte[] encryptedData;
+            byte[] cipherTextBytes = Convert.FromBase64String(encryptedText);
+            byte[] keyBytes = new Rfc2898DeriveBytes(PasswordHash, Convert.FromBase64String(SaltKey)).GetBytes(256 / 8);
+            symmetricKey.Mode = CipherMode.CBC;
+            symmetricKey.Padding = PaddingMode.None;
 
-                //Import the RSA Key information. This only needs
-                //toinclude the public key information.
-                rsaProvider.ImportParameters(RSAKeyInfo);
+            var decryptor = symmetricKey.CreateDecryptor(keyBytes, Convert.FromBase64String(VIKey));
+            var memoryStream = new MemoryStream(cipherTextBytes);
+            var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
+            byte[] plainTextBytes = new byte[cipherTextBytes.Length];
 
-                //Encrypt the passed byte array and specify OAEP padding.  
-                //OAEP padding is only available on Microsoft Windows XP or
-                //later.  
-                encryptedData = rsaProvider.Encrypt(DataToEncrypt, DoOAEPPadding);
-                return encryptedData;
-            }
-            //Catch and display a CryptographicException  
-            //to the console.
-            catch (CryptographicException e)
-            {
-                Console.WriteLine(e.Message);
-
-                return null;
-            }
-
+            int decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
+            memoryStream.Close();
+            cryptoStream.Close();
+            return Encoding.UTF8.GetString(plainTextBytes, 0, decryptedByteCount).TrimEnd("\0".ToCharArray());
         }
 
-        public byte[] RSADecrypt(byte[] DataToDecrypt, RSAParameters RSAKeyInfo, bool DoOAEPPadding)
-        {
-            try
-            {
-                byte[] decryptedData;
-                //Create a new instance of RSACryptoServiceProvider.
-                //Import the RSA Key information. This needs
-                //to include the private key information.
-                rsaProvider.ImportParameters(RSAKeyInfo);
 
-                //Decrypt the passed byte array and specify OAEP padding.  
-                //OAEP padding is only available on Microsoft Windows XP or
-                //later.  
-                decryptedData = rsaProvider.Decrypt(DataToDecrypt, DoOAEPPadding);
-
-                return decryptedData;
-            }
-            //Catch and display a CryptographicException  
-            //to the console.
-            catch (CryptographicException e)
-            {
-                Console.WriteLine(e.ToString());
-
-                return null;
-            }
-
-        }
     }
 }
