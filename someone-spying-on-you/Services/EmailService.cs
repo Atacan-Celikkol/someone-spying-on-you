@@ -23,8 +23,8 @@ namespace SomeOneSpyingOnYou.Services
             message.Body = text;
 
             var client = InitializeSmtpClient(sender);
+            client.SendMailAsync(message).Wait();
 
-            client.SendMailAsync(message);
             Console.WriteLine("Email sent");
         }
 
@@ -58,7 +58,7 @@ namespace SomeOneSpyingOnYou.Services
             client.Credentials = new NetworkCredential()
             {
                 UserName = sender.Username,
-                Password = sender.Password
+                Password = sender.Password,
             };
 
             client.Port = ProjectConfigurationManager.DefaultSmtpPort;

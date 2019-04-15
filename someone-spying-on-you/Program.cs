@@ -52,7 +52,8 @@ namespace SomeOneSpyingOnYou
         /// <summary>
         /// Item1=SenderAddress,
         /// Item2=SenderPassword,
-        /// Item3=Receivers
+        /// Item3=Receivers,
+        /// Item4=PasswordHash
         /// </summary>
         /// <returns></returns>
         static Tuple<string, string, string> GetInputs()
@@ -67,10 +68,9 @@ namespace SomeOneSpyingOnYou
             var senderPassword = Console.ReadLine();
             Console.Clear();
 
-            Console.WriteLine("Now, please enter receiver address or addresses.");
+            Console.WriteLine("Please enter receiver address or addresses.");
             Console.WriteLine("You can separate the addresses with ',' e.g. atacan@github.com,ata@github.com");
-            var receivers = Console.ReadLine();
-
+            var receivers = Console.ReadLine();            
 
             using (CryptographyService cryptographyService = new CryptographyService())
             {

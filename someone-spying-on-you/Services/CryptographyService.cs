@@ -7,24 +7,32 @@ namespace SomeOneSpyingOnYou.Services
 {
     public sealed class CryptographyService : IDisposable
     {
-        static private string PasswordHash = "P@@Sw0rd";
-        static private string SaltKey = "ZP5sji8BpzOTcm8lZikg+NbeN87JgzDJ6SEdVwoio4o=";
-        static private string VIKey = "Nj/uRmU76g1Pa4PRjO0B0w==";
+        static private string PasswordHash = ProjectConfigurationManager.GetValue("scr.PasswordHash");
+        static private string SaltKey = ProjectConfigurationManager.GetValue("scr.SaltKey");
+        static private string VIKey = ProjectConfigurationManager.GetValue("scr.VIKey");
 
         private static RijndaelManaged symmetricKey = new RijndaelManaged();
 
         public CryptographyService()
         {
-            //PasswordHash = ProjectConfigurationManager.GetValue("PasswordHash");
-            //SaltKey = ProjectConfigurationManager.GetValue("SaltKey");
-            //VIKey = ProjectConfigurationManager.GetValue("VIKey");
+            if (string.IsNullOrEmpty(SaltKey) || string.IsNullOrEmpty(VIKey))
+            {
+                symmetricKey.GenerateIV();
+                VIKey = Convert.ToBase64String(symmetricKey.IV);
+                ProjectConfigurationManager.AddOrReplace("scr.VIKey", VIKey);
+                symmetricKey.GenerateKey();
+                SaltKey = Convert.ToBase64String(symmetricKey.Key);
+                ProjectConfigurationManager.AddOrReplace("scr.SaltKey", SaltKey);
+            }
 
-            //symmetricKey = new RijndaelManaged();
-            //symmetricKey.GenerateIV();
-            //VIKey = Convert.ToBase64String(symmetricKey.IV);
-            //symmetricKey.GenerateKey();
-            //SaltKey = Convert.ToBase64String(symmetricKey.Key);
-
+            if (string.IsNullOrEmpty(PasswordHash))
+            {
+                Console.Clear();
+                Console.WriteLine("Now, please enter a password.");
+                Console.WriteLine("This password will be used for encrypt your information.");
+                PasswordHash = Console.ReadLine();
+                ProjectConfigurationManager.AddOrReplace("scr.PasswordHash", PasswordHash);
+            }
         }
 
         public void Dispose()
