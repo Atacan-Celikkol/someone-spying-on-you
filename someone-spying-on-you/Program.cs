@@ -7,11 +7,13 @@ namespace SomeOneSpyingOnYou
     public class Program
     {
         protected static IEmailService _emailService;
+        protected static IUserSerivce _userSerivce;
 
         static void InitializeConsoleConfigurations()
         {
             // Initialize Services
             _emailService = new EmailService();
+            _userSerivce = new UserService();
 
             // Console Configurations
             Console.ForegroundColor = AppConstants.foregroundColor;
@@ -22,62 +24,28 @@ namespace SomeOneSpyingOnYou
         {
             InitializeConsoleConfigurations();
 
-            if (
-                args.Any(x => x == "reset")
-                || string.IsNullOrEmpty(ProjectConfigurationManager.SenderAddress)
-                || string.IsNullOrEmpty(ProjectConfigurationManager.SenderPassword)
-                || string.IsNullOrEmpty(ProjectConfigurationManager.Receivers)
-               )
-            {
-                RegisterUserInformation();
-            }
-
             var sender = new EmailCredentials()
             {
                 Username = ProjectConfigurationManager.SenderAddress,
                 Password = ProjectConfigurationManager.SenderPassword
             };
-            _emailService.SendMailAsync(sender, ProjectConfigurationManager.Receivers, "Merhaba canım");
-        }
 
-        static void RegisterUserInformation()
-        {
-            var tuple = GetInputs();
+            var receivers = ProjectConfigurationManager.Receivers;
 
-            ProjectConfigurationManager.AddOrReplace("Sender.Address", tuple.Item1);
-            ProjectConfigurationManager.AddOrReplace("Sender.Password", tuple.Item2);
-            ProjectConfigurationManager.AddOrReplace("Receivers", tuple.Item3);
-        }
-
-        /// <summary>
-        /// Item1=SenderAddress,
-        /// Item2=SenderPassword,
-        /// Item3=Receivers,
-        /// Item4=PasswordHash
-        /// </summary>
-        /// <returns></returns>
-        static Tuple<string, string, string> GetInputs()
-        {
-            Console.WriteLine("Welcome, please give me some information");
-
-            Console.Write("Sender email address: ");
-            var senderAddress = Console.ReadLine();
-            Console.WriteLine("");
-
-            Console.Write("Sender email password: ");
-            var senderPassword = Console.ReadLine();
-            Console.Clear();
-
-            Console.WriteLine("Please enter receiver address or addresses.");
-            Console.WriteLine("You can separate the addresses with ',' e.g. atacan@github.com,ata@github.com");
-            var receivers = Console.ReadLine();            
-
-            using (CryptographyService cryptographyService = new CryptographyService())
+            if (
+                args.Any(x => x == "reset")
+                || string.IsNullOrEmpty(sender.Username)
+                || string.IsNullOrEmpty(sender.Password)
+                || string.IsNullOrEmpty(receivers)
+               )
             {
-                senderPassword = cryptographyService.Encrypt(senderPassword);
+                var tuple = _userSerivce.Register();
+                sender.Username = tuple.Item1.Username;
+                sender.Password = tuple.Item1.Password;
+                receivers = tuple.Item2;
             }
 
-            return new Tuple<string, string, string>(senderAddress, senderPassword, receivers);
+            _emailService.SendMailAsync(sender, receivers, "Merhaba canım");
         }
     }
 }

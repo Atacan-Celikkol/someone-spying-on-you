@@ -27,7 +27,6 @@ namespace SomeOneSpyingOnYou.Services
 
             if (string.IsNullOrEmpty(PasswordHash))
             {
-                Console.Clear();
                 Console.WriteLine("Now, please enter a password.");
                 Console.WriteLine("This password will be used for encrypt your information.");
                 PasswordHash = Console.ReadLine();
