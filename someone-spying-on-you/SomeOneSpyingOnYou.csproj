@@ -52,6 +52,7 @@
     <Compile Include="Services\EmailService.cs" />
     <Compile Include="Services\ProjectConfigurationManager.cs" />
     <Compile Include="Services\UserService.cs" />
+    <Compile Include="Services\WindowsService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

