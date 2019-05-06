@@ -23,7 +23,16 @@ namespace SomeOneSpyingOnYou.Services
             message.Body = text;
 
             var client = InitializeSmtpClient(sender);
-            client.SendMailAsync(message).Wait();
+            try
+            {
+                client.SendMailAsync(message).Wait();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.InnerException);
+                Console.ReadLine();
+                return;
+            }
 
             Console.WriteLine("Email sent");
         }
