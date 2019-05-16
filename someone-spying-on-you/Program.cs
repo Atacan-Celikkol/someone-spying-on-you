@@ -45,7 +45,7 @@ namespace SomeOneSpyingOnYou
                 receivers = tuple.Item2;
             }
 
-            _emailService.SendMailAsync(sender, receivers, "Merhaba canım");
+            _emailService.SendMailAsync(sender, receivers, $"{Environment.MachineName} is started at {DateTime.Now.ToShortTimeString()}").Wait();
         }
     }
 }
