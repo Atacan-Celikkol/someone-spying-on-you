@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Net;
 using System.Net.Mail;
+using System.Threading.Tasks;
 
 namespace SomeOneSpyingOnYou.Services
 {
     public interface IEmailService
     {
-        void SendMailAsync(EmailCredentials sender, string receiverAddresses, string text);
+        Task SendMailAsync(EmailCredentials sender, string receiverAddresses, string text);
     }
     public class EmailService : IEmailService
     {
-        public void SendMailAsync(EmailCredentials sender, string receiverAddresses, string text)
+        public async Task SendMailAsync(EmailCredentials sender, string receiverAddresses, string text)
         {
             if (receiverAddresses.Length < 1)
             {
@@ -24,7 +25,7 @@ namespace SomeOneSpyingOnYou.Services
             var client = InitializeSmtpClient(sender);
             try
             {
-                client.SendMailAsync(message).Wait();
+                await client.SendMailAsync(message);
             }
             catch (Exception e)
             {
